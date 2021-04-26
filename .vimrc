@@ -6,17 +6,16 @@ Plug 'preservim/nerdtree'                         " file browser
 Plug 'neoclide/coc.nvim', {'branch': 'release'}   " LSP Client
 Plug 'yggdroot/indentline'                        " custom indent lines
 Plug 'kien/rainbow_parentheses.vim'               " coloured pairs of parens
-Plug 'sainnhe/edge'                               " colorscheme
-Plug 'junegunn/seoul256.vim'                      " colorscheme
 Plug 'junegunn/fzf.vim'                           " fuzzyfinder plugin for vim
 Plug 'ryanoasis/vim-devicons'                     " plugin that shows icons
-Plug 'antoinemadec/coc-fzf'                       " uses fzf for CocList
+Plug 'antoinemadec/coc-fzf', {'branch': 'release'}" uses fzf for CocList
 Plug 'sheerun/vim-polyglot'                       " better syntax highlight
 Plug 'preservim/nerdcommenter'                    " commenting made easy
+Plug 'tpope/vim-fugitive'                         " call git commands from vim
+Plug 'joshdick/onedark.vim'                       " colorscheme
 call plug#end()
 " 
 " === === === === === ===
-
 
 " === PLUGINS SETUP ===
 "
@@ -24,17 +23,19 @@ filetype plugin indent on    " req, reset after vim-plug
 syntax enable                " req, reset after vim-plug
 " 
 "
-let g:lightline = {'colorscheme':'seoul256'}
-let g:indentLine_color_gui = '#3C3E43'
+let g:lightline = {'colorscheme':'onedark'}
+" let g:indentLine_color_gui = '#3C3E43'
+" let g:indentLine_color_term = 237
 let g:webdevicons_conceal_nerdtree_brackets = 1
-let g:indentLine_color_term = 237
-let g:seoul256_background = 234
 let g:NERDCreateDefaultMappings = 0
 let g:NERDSpaceDelims = 1
 let g:NERDTreeRespectWildIgnore = 1
+let g:fzf_preview_window = ['up:40%', 'ctrl-/']
+
 "
 " Set theme (non gui dependent on Terminal theme)
 if has('gui_running')
+    set guifont=FiraCodeNerdFontCompleteM-Retina:h11
     let g:indentLine_char_list = ['│','╎']
 else 
   let g:indentLine_char = '│' " Single char if term for indents
@@ -42,9 +43,17 @@ else
     set termguicolors " Sets GUI colors for terminal
   endif
 endif
-
-colorscheme seoul256
-highlight LineNr guibg=#262525
+" 
+" Uses terminal background colors if non GUI mode
+if (has("autocmd") && !has("gui_running"))
+  augroup colorset
+    autocmd!
+    let s:white = { "gui": "#ABB2BF", "cterm": "145", "cterm16" : "7" }
+    autocmd ColorScheme * call onedark#set_highlight("Normal", { "fg": s:white }) " `bg` will not be styled since there is no `bg` setting
+  augroup END
+endif
+"
+colorscheme onedark
 " 
 " === === === === === ===
 
@@ -89,7 +98,7 @@ function Autosave()
   endif
 endfunction
 
-function! s:show_documentation()
+function! s:showDocumentation()
   if (index(['vim','help'], &filetype) >= 0)
     execute 'h '.expand('<cword>')
   elseif (coc#rpc#ready())
@@ -98,13 +107,23 @@ function! s:show_documentation()
     execute '!' . &keywordprg . " " . expand('<cword>')
   endif
 endfunction
+
+function UseHardTabs()
+  " Probably write a better function
+  set noexpandtab 
+endfunction
 " 
 " === === === === === ===
 
 
 " === MAPPINGS ===
 " 
+"
 let mapleader = "\<Space>"
+
+" mappings to call functions
+nnoremap <leader>ht :call UseHardTabs()<CR>
+
 
 " horizontal and vertical split remaps
 nnoremap <leader>s <C-W>s
@@ -122,7 +141,7 @@ nnoremap <leader>t :tabnew<CR>
 " Plugin specific mappings
 nnoremap <C-P> :FZF<Space>
 nnoremap <leader>f :FZF<CR>
-nnoremap <leader>r :Rg<CR>
+nnoremap <leader>r :Rg<Space>
 nnoremap <leader>b :Buffers<CR>
 nnoremap <leader>zl :Lines<CR>
 nnoremap <leader>zb :BLines<CR>
@@ -131,14 +150,17 @@ nnoremap <leader>cl :CocFzfList<CR>
 nnoremap <leader>cc :CocFzfList commands<CR>
 nnoremap <leader>ca :CocFzfList actions<CR>
 nnoremap <leader>cd :CocFzfList diagnostics<CR>
+nnoremap <leader>co :CocFzfList outline<CR>
+nnoremap <leader>cf :call CocAction('format')<CR>
+
 
 " Map tab step through next, previous 
-nnoremap gtn :tabn<CR>
+nnoremap gtn :tabn<CR>      
 nnoremap gtp :tabp<CR>
 
 " Map buffer step through next, previous
-" nnoremap gbn :bn<CR>
-" noremap gbp :bp<CR>
+nnoremap gbn :bn<CR>
+noremap gbp :bp<CR>
 
 " NERDCommenter keymaps
 nmap <leader>/ <Plug>NERDCommenterToggle
@@ -155,7 +177,7 @@ nmap gr <Plug>(coc-references)                     " got the refs of a var
 nmap gy <Plug>(coc-type-definition)
 nmap gi <Plug>(coc-implementation)
 "
-nnoremap K :call <SID>show_documentation()<CR>     " <shift-k> for doc
+nnoremap K :call <SID>showDocumentation()<CR>     " <shift-k> for doc
 "
 " === === === === === ===
  
@@ -179,4 +201,3 @@ au CursorHold * silent call CocActionAsync('highlight') " highlight references
 " https://github.com/weirongxu/coc-explorer
 " https://github.com/RRethy/vim-hexokinase
 " https://github.com/tpope/vim-surround
-" https://github.com/tpope/vim-fugitive
