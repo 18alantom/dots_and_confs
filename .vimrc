@@ -12,8 +12,11 @@ Plug 'antoinemadec/coc-fzf', {'branch': 'release'}" uses fzf for CocList
 Plug 'sheerun/vim-polyglot'                       " better syntax highlight
 Plug 'preservim/nerdcommenter'                    " commenting made easy
 Plug 'tpope/vim-fugitive'                         " call git commands from vim
+Plug 'raimondi/delimitmate'                       " add matching stuff "('{etc
+Plug 'tpope/vim-surround'                         " surround stuff with "('{etc
 Plug 'joshdick/onedark.vim'                       " colorscheme
 call plug#end()
+
 " 
 " === === === === === ===
 
@@ -23,15 +26,14 @@ filetype plugin indent on    " req, reset after vim-plug
 syntax enable                " req, reset after vim-plug
 " 
 "
-let g:lightline = {'colorscheme':'onedark'}
 " let g:indentLine_color_gui = '#3C3E43'
 " let g:indentLine_color_term = 237
+let g:lightline = {'colorscheme':'onedark'}
 let g:webdevicons_conceal_nerdtree_brackets = 1
 let g:NERDCreateDefaultMappings = 0
 let g:NERDSpaceDelims = 1
 let g:NERDTreeRespectWildIgnore = 1
 let g:fzf_preview_window = ['up:40%', 'ctrl-/']
-
 "
 " Set theme (non gui dependent on Terminal theme)
 if has('gui_running')
@@ -49,7 +51,8 @@ if (has("autocmd") && !has("gui_running"))
   augroup colorset
     autocmd!
     let s:white = { "gui": "#ABB2BF", "cterm": "145", "cterm16" : "7" }
-    autocmd ColorScheme * call onedark#set_highlight("Normal", { "fg": s:white }) " `bg` will not be styled since there is no `bg` setting
+    autocmd ColorScheme * call onedark#set_highlight("Normal", { "fg": s:white }) 
+    " `bg` will not be styled since there is no `bg` setting
   augroup END
 endif
 "
@@ -60,10 +63,10 @@ colorscheme onedark
 
 " === SET VALUES ===
 "
+set nocompatible              " set non vi compatible, req Vundle
 set laststatus=2              " Config for lightline
 set noshowmode                " Prevent '-- INSERT --' from showing
 set encoding=UTF-8            " coc.nvim recommended
-set nocompatible              " set non vi compatible, req Vundle
 set clipboard=unnamed         " Use the system clipboard.
 set rtp+=/usr/local/opt/fzf   " Add fzf to runtime Path
 set number                    " set line numbers
@@ -92,8 +95,7 @@ set wildignore+=*/node_modules,*/__pycache__
 "
 " Function definitions (move to a different file maybe?)
 function Autosave()
-  " Better autosave on type : https://stackoverflow.com/a/27387138/9681690
-  if &modifiable
+  if &modifiable && (expand("%:p") != "")
     :w
   endif
 endfunction
@@ -108,22 +110,38 @@ function! s:showDocumentation()
   endif
 endfunction
 
-function UseHardTabs()
-  " Probably write a better function
-  set noexpandtab 
+function ToggleTabs()
+  if &expandtab
+    set noexpandtab 
+    echo "noexpandtab"
+  else
+    set expandtab
+    echo "expandtab"
+	endif
 endfunction
+
+function EchoAbsolutePath()
+  echo expand("%:p")
+endfunction
+
 " 
 " === === === === === ===
+
+
+
+" === COMMANDS ===
+" 
+command Tt :call ToggleTabs()
+command Ap :call EchoAbsolutePath()
+" 
+" === === === === === ===
+
 
 
 " === MAPPINGS ===
 " 
 "
 let mapleader = "\<Space>"
-
-" mappings to call functions
-nnoremap <leader>ht :call UseHardTabs()<CR>
-
 
 " horizontal and vertical split remaps
 nnoremap <leader>s <C-W>s
@@ -153,8 +171,7 @@ nnoremap <leader>cd :CocFzfList diagnostics<CR>
 nnoremap <leader>co :CocFzfList outline<CR>
 nnoremap <leader>cf :call CocAction('format')<CR>
 
-
-" Map tab step through next, previous 
+" Map tab step through next, previous
 nnoremap gtn :tabn<CR>      
 nnoremap gtp :tabp<CR>
 
@@ -166,17 +183,16 @@ noremap gbp :bp<CR>
 nmap <leader>/ <Plug>NERDCommenterToggle
 vmap <leader>/ <Plug>NERDCommenterToggle
 
-" Coc Go to keymaps
-"
 " Coc toggle keymaps
 nnoremap <c-c>e :CocEnable<CR>
 nnoremap <c-c>d :CocDisable<CR>
-"
+
+" Coc Go to keymaps
 nmap gd <Plug>(coc-definition)                     " goto defn of a var
 nmap gr <Plug>(coc-references)                     " got the refs of a var
 nmap gy <Plug>(coc-type-definition)
 nmap gi <Plug>(coc-implementation)
-"
+
 nnoremap K :call <SID>showDocumentation()<CR>     " <shift-k> for doc
 "
 " === === === === === ===
@@ -187,11 +203,13 @@ nnoremap K :call <SID>showDocumentation()<CR>     " <shift-k> for doc
 "
 " Autocmds
 au FocusLost * :call Autosave()            " Autosave on FocusLost
-au VimEnter * RainbowParenthesesToggle     " Enable rainbow parens
+au VimEnter * RainbowParenthesesToggle
 au Syntax * RainbowParenthesesLoadRound
 au Syntax * RainbowParenthesesLoadBraces
+" au Syntax * RainbowParenthesesLoadSquare " Clashes with nerdtree icons
 au CursorHold * silent call CocActionAsync('highlight') " highlight references
-" au Syntax * ainbowParenthesesLoadSquare " Clashes with nerdtree icons
+au BufNewFile,BufRead *.txt
+  \ set foldmethod=manual
 "
 " === === === === === ===
 
@@ -200,4 +218,3 @@ au CursorHold * silent call CocActionAsync('highlight') " highlight references
 "
 " https://github.com/weirongxu/coc-explorer
 " https://github.com/RRethy/vim-hexokinase
-" https://github.com/tpope/vim-surround
