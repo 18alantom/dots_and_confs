@@ -2,7 +2,6 @@
 "
 call plug#begin('~/.vim/plugged')
 Plug 'itchyny/lightline.vim'                      " status bar for vim
-Plug 'preservim/nerdtree'                         " file browser
 Plug 'neoclide/coc.nvim', {'branch': 'release'}   " LSP Client
 Plug 'yggdroot/indentline'                        " custom indent lines
 Plug 'kien/rainbow_parentheses.vim'               " coloured pairs of parens
@@ -10,22 +9,25 @@ Plug 'junegunn/fzf.vim'                           " fuzzyfinder plugin for vim
 Plug 'ryanoasis/vim-devicons'                     " plugin that shows icons
 Plug 'antoinemadec/coc-fzf', {'branch': 'release'}" uses fzf for CocList
 Plug 'sheerun/vim-polyglot'                       " better syntax highlight
-Plug 'preservim/nerdcommenter'                    " commenting made easy
-Plug 'tpope/vim-fugitive'                         " call git commands from vim
 Plug 'raimondi/delimitmate'                       " add matching stuff "('{etc
-Plug 'tpope/vim-surround'                         " surround stuff with "('{etc
 Plug 'joshdick/onedark.vim'                       " colorscheme
+Plug 'preservim/nerdtree'                         " file browser
+Plug 'preservim/nerdcommenter'                    " commenting made easy
+Plug 'tpope/vim-repeat'                           " repeat now works for plugins
+Plug 'tpope/vim-surround'                         " surround stuff with "('{etc
+Plug 'tpope/vim-fugitive'                         " call git commands from vim
+Plug 'ciaranm/detectindent'                       " autoindent
 call plug#end()
 
 " 
 " === === === === === ===
+
 
 " === PLUGINS SETUP ===
 "
 filetype plugin indent on    " req, reset after vim-plug
 syntax enable                " req, reset after vim-plug
 " 
-"
 " let g:indentLine_color_gui = '#3C3E43'
 " let g:indentLine_color_term = 237
 let g:lightline = {'colorscheme':'onedark'}
@@ -55,7 +57,6 @@ if (has("autocmd") && !has("gui_running"))
     " `bg` will not be styled since there is no `bg` setting
   augroup END
 endif
-"
 colorscheme onedark
 " 
 " === === === === === ===
@@ -63,12 +64,14 @@ colorscheme onedark
 
 " === SET VALUES ===
 "
+set rtp+=/usr/local/opt/fzf   " Add fzf to runtime Path
+set noendofline               " Else add's an annoying new line at the end
+set binary                    " Same reason as above
 set nocompatible              " set non vi compatible, req Vundle
 set laststatus=2              " Config for lightline
 set noshowmode                " Prevent '-- INSERT --' from showing
 set encoding=UTF-8            " coc.nvim recommended
 set clipboard=unnamed         " Use the system clipboard.
-set rtp+=/usr/local/opt/fzf   " Add fzf to runtime Path
 set number                    " set line numbers
 set autoindent                " Inherit indentation
 set expandtab                 " Convert tabs to spaces
@@ -93,7 +96,6 @@ set wildignore+=*/node_modules,*/__pycache__
 
 " === FUNCTIONS ===
 "
-" Function definitions (move to a different file maybe?)
 function Autosave()
   if &modifiable && (expand("%:p") != "")
     :w
@@ -110,37 +112,24 @@ function! s:showDocumentation()
   endif
 endfunction
 
-function ToggleTabs()
-  if &expandtab
-    set noexpandtab 
-    echo "noexpandtab"
-  else
-    set expandtab
-    echo "expandtab"
-	endif
-endfunction
-
 function EchoAbsolutePath()
   echo expand("%:p")
 endfunction
-
 " 
 " === === === === === ===
-
 
 
 " === COMMANDS ===
 " 
-command Tt :call ToggleTabs()
-command Ap :call EchoAbsolutePath()
+command Ap call EchoAbsolutePath()
+command! -bang -nargs=* RG call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case "
+  \. <q-args>, 1, fzf#vim#with_preview(), <bang>0)
 " 
 " === === === === === ===
 
 
-
 " === MAPPINGS ===
 " 
-"
 let mapleader = "\<Space>"
 
 " horizontal and vertical split remaps
@@ -153,31 +142,32 @@ nnoremap <leader>k <C-W><C-K>
 nnoremap <leader>l <C-W><C-L>
 nnoremap <leader>h <C-W><C-H>
 
-" Create a new tab
-nnoremap <leader>t :tabnew<CR>
-
 " Plugin specific mappings
 nnoremap <C-P> :FZF<Space>
 nnoremap <leader>f :FZF<CR>
-nnoremap <leader>r :Rg<Space>
+nnoremap <leader>r :RG<Space>
+nnoremap <leader>g :Rg<Space>
 nnoremap <leader>b :Buffers<CR>
 nnoremap <leader>zl :Lines<CR>
 nnoremap <leader>zb :BLines<CR>
-nnoremap <leader>N :NERDTree<CR>
 nnoremap <leader>cl :CocFzfList<CR>
+nnoremap <leader>N :NERDTreeToggle<CR>
+nnoremap <leader>di :DetectIndent<CR>
 nnoremap <leader>cc :CocFzfList commands<CR>
 nnoremap <leader>ca :CocFzfList actions<CR>
 nnoremap <leader>cd :CocFzfList diagnostics<CR>
 nnoremap <leader>co :CocFzfList outline<CR>
 nnoremap <leader>cf :call CocAction('format')<CR>
+xnoremap <leader>cf <Plug>(coc-format-selected)
 
 " Map tab step through next, previous
 nnoremap gtn :tabn<CR>      
 nnoremap gtp :tabp<CR>
+nnoremap <leader>t :tabnew<CR>
 
 " Map buffer step through next, previous
 nnoremap gbn :bn<CR>
-noremap gbp :bp<CR>
+nnoremap gbp :bp<CR>
 
 " NERDCommenter keymaps
 nmap <leader>/ <Plug>NERDCommenterToggle
@@ -188,15 +178,14 @@ nnoremap <c-c>e :CocEnable<CR>
 nnoremap <c-c>d :CocDisable<CR>
 
 " Coc Go to keymaps
-nmap gd <Plug>(coc-definition)                     " goto defn of a var
-nmap gr <Plug>(coc-references)                     " got the refs of a var
+nmap gd <Plug>(coc-definition)                    " goto defn of a var
+nmap gr <Plug>(coc-references)                    " got the refs of a var
 nmap gy <Plug>(coc-type-definition)
 nmap gi <Plug>(coc-implementation)
 
 nnoremap K :call <SID>showDocumentation()<CR>     " <shift-k> for doc
 "
-" === === === === === ===
- 
+" === === === === === === 
 
 
 " === AUTOCOMMANDS  ===

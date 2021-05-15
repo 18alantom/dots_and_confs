@@ -28,6 +28,8 @@ export PATH="/Library/TeX/Distributions/.DefaultTeX/Contents/Programs/texbin:$PA
 alias dconf='/usr/local/bin/git --git-dir=$HOME/.configs/ --work-tree=$HOME'
 alias history='history -E'
 alias notebook='jupyter notebook'
+alias e='exa'
+alias ea='exa -la --icons --git'
 alias v='vim'
 alias nv="/Users/alan/nvim-osx64/bin/nvim"
 alias j="jump"
@@ -52,7 +54,7 @@ else
 fi
 unset __conda_setup
 # <<< conda initialize <<<
-conda activate ds
+conda activate newds
 
 # Function to ssh and start notebook on pink.local default port 6969
 pink(){
