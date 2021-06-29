@@ -54,7 +54,7 @@ else
 fi
 unset __conda_setup
 # <<< conda initialize <<<
-conda activate newds
+conda activate ds
 
 # Function to ssh and start notebook on pink.local default port 6969
 pink(){
@@ -68,3 +68,8 @@ pink(){
 
 # FZF autcompletion and shortcuts
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion

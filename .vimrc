@@ -115,6 +115,14 @@ endfunction
 function EchoAbsolutePath()
   echo expand("%:p")
 endfunction
+
+function ToggleLightLine()
+  if (&laststatus==2)
+    set laststatus=0
+  else
+    set laststatus=2
+  endif
+endfunction
 " 
 " === === === === === ===
 
@@ -152,13 +160,16 @@ nnoremap <leader>zl :Lines<CR>
 nnoremap <leader>zb :BLines<CR>
 nnoremap <leader>cl :CocFzfList<CR>
 nnoremap <leader>N :NERDTreeToggle<CR>
+nnoremap <leader>L :call ToggleLightLine()<CR>
+nnoremap <leader>G :G blame<CR>
 nnoremap <leader>di :DetectIndent<CR>
 nnoremap <leader>cc :CocFzfList commands<CR>
 nnoremap <leader>ca :CocFzfList actions<CR>
 nnoremap <leader>cd :CocFzfList diagnostics<CR>
 nnoremap <leader>co :CocFzfList outline<CR>
 nnoremap <leader>cf :call CocAction('format')<CR>
-xnoremap <leader>cf <Plug>(coc-format-selected)
+xmap <leader>cf <Plug>(coc-format-selected)
+nmap <leader>rn <Plug>(coc-rename)
 
 " Map tab step through next, previous
 nnoremap gtn :tabn<CR>      
@@ -168,6 +179,7 @@ nnoremap <leader>t :tabnew<CR>
 " Map buffer step through next, previous
 nnoremap gbn :bn<CR>
 nnoremap gbp :bp<CR>
+nnoremap gbd :bp<CR> :bd #<CR>
 
 " NERDCommenter keymaps
 nmap <leader>/ <Plug>NERDCommenterToggle
@@ -199,6 +211,12 @@ au Syntax * RainbowParenthesesLoadBraces
 au CursorHold * silent call CocActionAsync('highlight') " highlight references
 au BufNewFile,BufRead *.txt
   \ set foldmethod=manual
+augroup keepFolds
+  au!
+  au BufWinLeave *.txt mkview
+  au BufWinEnter *.txt silent! loadview
+augroup END
+
 "
 " === === === === === ===
 
