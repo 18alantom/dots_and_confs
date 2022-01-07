@@ -17,6 +17,7 @@ Plug 'tpope/vim-repeat'                           " repeat now works for plugins
 Plug 'tpope/vim-surround'                         " surround stuff with "('{etc
 Plug 'tpope/vim-fugitive'                         " call git commands from vim
 Plug 'ciaranm/detectindent'                       " autoindent
+Plug '18alantom/zettel.vim'                       " create tags
 call plug#end()
 
 " 
@@ -36,6 +37,8 @@ let g:NERDCreateDefaultMappings = 0
 let g:NERDSpaceDelims = 1
 let g:NERDTreeRespectWildIgnore = 1
 let g:fzf_preview_window = ['up:40%', 'ctrl-/']
+let g:zettel_dont_maintain_taglink_file = 1
+let g:coc_start_at_startup=0
 "
 " Set theme (non gui dependent on Terminal theme)
 if has('gui_running')
@@ -64,7 +67,7 @@ colorscheme onedark
 
 " === SET VALUES ===
 "
-set rtp+=/usr/local/opt/fzf   " Add fzf to runtime Path
+set rtp+=/opt/homebrew/opt/fzf " Add fzf to runtime Path
 set noendofline               " Else add's an annoying new line at the end
 set binary                    " Same reason as above
 set nocompatible              " set non vi compatible, req Vundle
@@ -86,6 +89,7 @@ set nofoldenable              " Open notebooks unfolded
 set signcolumn=number         " Sign column and number column are the same
 set updatetime=300            " 300ms before swap written to disk
 set shortmess+=c              " Don't pass messages to ins-completion-menu (?)
+set laststatus=0              " No lightline by default
 " 
 " Set wild ignore ()
 set wildignore+=*.pyc
@@ -112,8 +116,12 @@ function! s:showDocumentation()
   endif
 endfunction
 
-function EchoAbsolutePath()
-  echo expand("%:p")
+function ToggleConceallevel()
+  if &conceallevel == 2
+    set conceallevel=0
+  else
+    set conceallevel=2
+  endif
 endfunction
 
 function ToggleLightLine()
@@ -123,13 +131,50 @@ function ToggleLightLine()
     set laststatus=2
   endif
 endfunction
+
+function ToggleNERDTree()
+  if g:NERDTree.IsOpen()
+    execute ":NERDTreeClose"
+  else
+    try
+      execute ":NERDTree %"
+    catch
+      execute ":NERDTree"
+    endtry
+  endif
+endfunction
+
+function SaveTempNote()
+  let l:path = join([getenv("HOME"), "Desktop", "tempnotes"], "/")
+  let l:existing_numbers = []
+
+  call mkdir(l:path, "p")
+  let l:paths = split(globpath(l:path, "*.md"), ",")
+
+  for f in l:paths
+    let l:filename = split(f, "/")[-1]
+    let l:num = str2nr(l:filename[:-4])
+
+    if l:num == 0
+      continue
+    else
+      call add(l:existing_numbers, l:num)
+    endif
+  endfor
+
+  let l:n = 1
+  if len(l:existing_numbers)
+    let l:n = sort(l:existing_numbers, {i1, i2 -> i1 - i2})[-1] + 1
+  endif
+  let l:savepath = join([l:path, l:n .. ".md"], "/")
+  execute ":save " .. l:savepath
+endfunction
 " 
 " === === === === === ===
 
 
 " === COMMANDS ===
 " 
-command Ap call EchoAbsolutePath()
 command! -bang -nargs=* RG call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case "
   \. <q-args>, 1, fzf#vim#with_preview(), <bang>0)
 " 
@@ -140,11 +185,27 @@ command! -bang -nargs=* RG call fzf#vim#grep("rg --column --line-number --no-hea
 " 
 let mapleader = "\<Space>"
 
-" horizontal and vertical split remaps
+" Personal convenience mapings
+nnoremap <leader>ap :echo expand("%:p")<CR>                   " Display absolute path
+nnoremap <leader>cp :execute "chdir " .. expand("%:p:h")<CR>  " Ch.directory to current file
+nnoremap <leader>op :execute "!open " .. expand("%:p")<CR>    " Open file, ex: .md in browser if set
+nnoremap <leader>cn :call ToggleConceallevel()<CR>            " Switch between 0 and 1 conceallevel
+nnoremap <leader>no :call SaveTempNote()<CR>                  " Save current buffer in ~/Desktop/tempnote
+nnoremap <leader>L :call ToggleLightLine()<CR>
+nnoremap <leader>q :q!<CR>
+nnoremap <leader>x :x<CR>
+
+" Resize
+nnoremap <C-k> :resize +1<cr>
+nnoremap <C-j> :resize -1<cr>
+nnoremap <C-l> :vertical resize +1<cr>
+nnoremap <C-h> :vertical resize -1<cr>
+
+" Horizontal and vertical split remaps
 nnoremap <leader>s <C-W>s
 nnoremap <leader>v <C-W>v
 
-" pane movement remaps
+" Pane movement remaps
 nnoremap <leader>j <C-W><C-J>
 nnoremap <leader>k <C-W><C-K>
 nnoremap <leader>l <C-W><C-L>
@@ -156,13 +217,13 @@ nnoremap <leader>f :FZF<CR>
 nnoremap <leader>r :RG<Space>
 nnoremap <leader>g :Rg<Space>
 nnoremap <leader>b :Buffers<CR>
-nnoremap <leader>zl :Lines<CR>
+nnoremap <leader>zn :Lines<CR>
 nnoremap <leader>zb :BLines<CR>
 nnoremap <leader>cl :CocFzfList<CR>
-nnoremap <leader>N :NERDTreeToggle<CR>
-nnoremap <leader>L :call ToggleLightLine()<CR>
+nnoremap <leader>N :call ToggleNERDTree()<CR>
 nnoremap <leader>G :G blame<CR>
 nnoremap <leader>di :DetectIndent<CR>
+nnoremap <leader>cs :CocStart<CR>
 nnoremap <leader>cc :CocFzfList commands<CR>
 nnoremap <leader>ca :CocFzfList actions<CR>
 nnoremap <leader>cd :CocFzfList diagnostics<CR>
@@ -185,6 +246,25 @@ nnoremap gbd :bp<CR> :bd #<CR>
 nmap <leader>/ <Plug>NERDCommenterToggle
 vmap <leader>/ <Plug>NERDCommenterToggle
 
+" Treat line wraps as normal lines
+noremap j gj
+noremap k gk
+
+" Keep cursor centered
+nnoremap n nzz
+nnoremap N Nzz
+
+" Group text move
+" vnoremap J :move '>+1<CR>gv=gv
+" vnoremap K :move '<-2<CR>gv=gv
+
+" Undo break points
+inoremap , ,<c-g>u
+inoremap . .<c-g>u
+inoremap ! !<c-g>u
+inoremap ? ?<c-g>u
+inoremap <space> <space><c-g>u
+
 " Coc toggle keymaps
 nnoremap <c-c>e :CocEnable<CR>
 nnoremap <c-c>d :CocDisable<CR>
@@ -196,6 +276,7 @@ nmap gy <Plug>(coc-type-definition)
 nmap gi <Plug>(coc-implementation)
 
 nnoremap K :call <SID>showDocumentation()<CR>     " <shift-k> for doc
+
 "
 " === === === === === === 
 
@@ -209,7 +290,7 @@ au Syntax * RainbowParenthesesLoadRound
 au Syntax * RainbowParenthesesLoadBraces
 " au Syntax * RainbowParenthesesLoadSquare " Clashes with nerdtree icons
 au CursorHold * silent call CocActionAsync('highlight') " highlight references
-au BufNewFile,BufRead *.txt
+au BufNewFile,BufRead *.txt,*.md
   \ set foldmethod=manual
 augroup keepFolds
   au!
@@ -219,9 +300,3 @@ augroup END
 
 "
 " === === === === === ===
-
-
-" PLUGINS TO CHECK LATER
-"
-" https://github.com/weirongxu/coc-explorer
-" https://github.com/RRethy/vim-hexokinase
