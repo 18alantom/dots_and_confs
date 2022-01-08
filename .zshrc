@@ -8,68 +8,77 @@ plugins=(
   z
 )
 ZSH_THEME="common"
-CASE_SENSITIVE="true"             # Case sensitive completion
+CASE_SENSITIVE="true"
 source $ZSH/oh-my-zsh.sh
 
-export EDITOR='vim'
+export EDITOR='nvim'
+export NVM_DIR="$HOME/.nvm"
 # Swap FZF find for fd, don't ignore hidden
-export FZF_DEFAULT_COMMAND='fd --type file --type directory --hidden --exclude .git'
+export FZF_DEFAULT_COMMAND='fd --type file --type directory --hidden --exclude node_modules --exclude .git'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-# For React-Native
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/tools/bin
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-# LaTeX
-export PATH="/Library/TeX/Distributions/.DefaultTeX/Contents/Programs/texbin:$PATH"
 
-# https://www.atlassian.com/git/tutorials/dotfiles
-alias dconf='/usr/local/bin/git --git-dir=$HOME/.configs/ --work-tree=$HOME'
+# ref: atlassian.com/git/tutorials/dotfiles
+alias dconf='/usr/bin/git --git-dir=$HOME/.dots_and_confs/ --work-tree=$HOME'
 alias history='history -E'
-alias notebook='jupyter notebook'
+alias nb='jupyter notebook'
 alias e='exa'
 alias ea='exa -la --icons --git'
 alias v='vim'
-alias nv="/Users/alan/nvim-osx64/bin/nvim"
+alias nv="nvim"
 alias j="jump"
 alias jm="mark"
 alias ju="unmark"
+alias dh="du -hd 1"
 
-path+=('/usr/local/mysql/bin')
 path+=('~/anaconda3/bin')
-
-
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/Users/alan/opt/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/Users/alan/opt/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "/Users/alan/opt/anaconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/Users/alan/opt/anaconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-conda activate ds
-
-# Function to ssh and start notebook on pink.local default port 6969
-pink(){
-  if [ -z "$1" ]
-  then 
-    ssh pink.local -L 6969:localhost:6969
-  else
-    ssh pink.local -L $1\:localhost:$1
-  fi
-}
 
 # FZF autcompletion and shortcuts
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+init_conda() {
+  # >>> conda initialize >>>
+  # !! Contents within this block are managed by 'conda init' !!
+  __conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+  if [ $? -eq 0 ]; then
+      eval "$__conda_setup"
+  else
+      if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
+          . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+      else
+          export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
+      fi
+  fi
+  unset __conda_setup
+  # <<< conda initialize <<<
+  conda activate main
+}
+
+init_nvm() {
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+}
+
+# ref: gist.github.com/QinMing/364774610afc0e06cc223b467abe83c0
+lazy_load() {
+  local -a names
+  names=("${(@s: :)${1}}") # split $1 by space
+  unalias "${names[@]}"
+  $2
+  unset -f $2
+  shift 2
+  $*
+}
+
+group_lazy_load() {
+  local script
+  script=$1
+  shift 1
+  for cmd in "$@"; do
+    alias $cmd="lazy_load \"$*\" $script $cmd"
+  done
+}
+
+group_lazy_load init_nvm code nvm node npm yarn
+group_lazy_load init_conda code py python conda
+unset -f group_lazy_load
