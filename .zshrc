@@ -29,6 +29,9 @@ alias j="jump"
 alias jm="mark"
 alias ju="unmark"
 alias dh="du -hd 1"
+alias py="ipython"
+alias no="node"
+alias brew86='/usr/local/bin/brew'
 
 path+=('~/anaconda3/bin')
 
@@ -63,8 +66,8 @@ init_nvm() {
 lazy_load() {
   local -a names
   names=("${(@s: :)${1}}") # split $1 by space
-  unalias "${names[@]}"
-  $2
+  unalias "${names[@]}" 2> /dev/null
+  $2 2> /dev/null
   unset -f $2
   shift 2
   $*
@@ -79,6 +82,20 @@ group_lazy_load() {
   done
 }
 
-group_lazy_load init_nvm code nvm node npm yarn
-group_lazy_load init_conda code py python conda
+init_all() {
+  init_nvm
+  init_conda
+  unset -f init_conda
+  unset -f init_nvm
+}
+
+group_lazy_load init_all init code jupyter nvm node npm yarn pip python ipython conda bench
 unset -f group_lazy_load
+
+proto() {
+  git clone https://github.com/18alantom/temp.git $1
+  cd $1
+  rm -rf ./.git
+  yarn
+  code .
+}

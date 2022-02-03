@@ -149,18 +149,21 @@ function SaveTempNote()
   let l:existing_numbers = []
 
   call mkdir(l:path, "p")
-  let l:paths = split(globpath(l:path, "*.md"), ",")
+  let l:paths = split(globpath(l:path, "*.md"))
 
+  echo l:paths
   for f in l:paths
     let l:filename = split(f, "/")[-1]
     let l:num = str2nr(l:filename[:-4])
+    echo l:num
 
-    if l:num == 0
-      continue
-    else
+
+    if l:num != 0
       call add(l:existing_numbers, l:num)
     endif
   endfor
+
+  echo l:existing_numbers
 
   let l:n = 1
   if len(l:existing_numbers)
@@ -193,7 +196,7 @@ nnoremap <leader>cn :call ToggleConceallevel()<CR>            " Switch between 0
 nnoremap <leader>no :call SaveTempNote()<CR>                  " Save current buffer in ~/Desktop/tempnote
 nnoremap <leader>L :call ToggleLightLine()<CR>
 nnoremap <leader>q :q!<CR>
-nnoremap <leader>x :x<CR>
+nnoremap <leader>w :wq<CR>
 
 " Resize
 nnoremap <C-k> :resize +1<cr>
